@@ -1,18 +1,48 @@
+# ============================================================================
+#  Dependencias - RL + Conduccion Autonoma (Duckietown)  |  Python 3.11 (Colab)
+#
+#  Instalacion (dos comandos, ver PASO 1 del notebook):
+#      pip install -r requirements.txt
+#      pip install --no-deps git+https://github.com/duckietown/gym-duckietown.git@daffy
+#
+#  numpy esta fijado en 1.23.5 A PROPOSITO: es la version mas alta que es a la vez
+#    - compatible con gym==0.25.2 (la API antigua de gym-duckietown usa alias como
+#      np.bool8 que numpy>=1.24 elimino), y
+#    - compatible con el stack moderno (scipy 1.15, scikit-image 0.24, opencv 4.11,
+#      matplotlib 3.8, que exigen numpy>=1.23.5), y
+#    - tiene wheels para Python 3.11.
+#
+#  gym-duckietown se instala APARTE con --no-deps porque su setup.py fija un tope
+#  obsoleto (numpy<=1.20.0, sin wheels para 3.11) que haria imposible la resolucion.
+#  TODAS sus dependencias reales ya estan fijadas aqui abajo, asi que --no-deps es
+#  seguro y deja el entorno completo y reproducible.
+# ============================================================================
+
+# --- Stack de RL moderno (Stable-Baselines3 / Gymnasium / PyTorch) ---
 stable-baselines3==2.2.1
 gymnasium==0.29.1
 torch==2.12.0
 numpy==1.23.5
+
+# --- API antigua de gym (la que consume gym-duckietown) ---
 gym==0.25.2
 pyglet==1.5.27
+
+# --- Vision / imagen / video ---
 opencv-python-headless==4.11.0.86
 scikit-image==0.24.0
 scipy==1.15.3
-pyzmq==27.1.0
-PyYAML==6.0.3
 Pillow==12.2.0
 imageio==2.37.3
 imageio-ffmpeg==0.6.0
+matplotlib==3.8.4
+
+# --- Infraestructura y render headless ---
+pyzmq==27.1.0
+PyYAML==6.0.3
 pyvirtualdisplay==3.0
+
+# --- Stack Duckietown "daffy" (= dependencias reales de gym-duckietown) ---
 zuper-commons-z6==6.2.4
 zuper-ipce-z6==6.1.2
 zuper-nodes-z6==6.2.17
@@ -23,5 +53,8 @@ aido-protocols-daffy==6.1.1
 duckietown-serialization-ds1==1.1.1
 duckietown-world-daffy==6.4.3
 pycontracts3==7.2
-matplotlib==3.8.4
-git+https://github.com/duckietown/gym-duckietown.git@daffy
+
+# --- gym-duckietown (el simulador) ---
+# NO se pone como linea activa: su tope numpy<=1.20.0 rompe la resolucion en 3.11.
+# Se instala justo despues, con --no-deps (sus dependencias ya estan todas arriba):
+#   pip install --no-deps git+https://github.com/duckietown/gym-duckietown.git@daffy
