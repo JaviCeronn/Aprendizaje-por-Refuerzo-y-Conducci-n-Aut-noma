@@ -80,11 +80,11 @@ difícil que la versión determinista).
 - **Hiperparámetros:** `α=0.1`, `γ=0.99`, 10 000 episodios, máx. 200 pasos/episodio.
 - **Desempate aleatorio** entre acciones de igual valor para evitar sesgos sistemáticos.
 
-Código: [`q_learning_sandbox.py`](q_learning_sandbox.py) y celda 2 del notebook.
+Código: [`q_learning_sandbox.py`](../src/q_learning_sandbox.py) y celda 2 del notebook.
 
 ### 2.3 Resultados de la Fase 1
 
-![Progreso del entrenamiento Q-Learning](q_learning_progress.png)
+![Progreso del entrenamiento Q-Learning](../results/q_learning_progress.png)
 
 > *Sustituir la imagen por `q_learning_progress.png` generada al ejecutar el script.*
 
@@ -315,31 +315,32 @@ empleadas para maximizar la generalización:
 
 ### Entregables
 
-| Archivo | Contenido |
-|---------|-----------|
-| `Challenge_RL.ipynb` | Notebook completo (Fases 1, 2 y 3) |
-| `q_learning_sandbox.py` | Fase 1 (Q-Learning) como script |
-| `train.py` | Pipeline de entrenamiento DQN/PPO/SAC |
-| `eval.ipynb` | Evaluación autocontenida + vídeo (clases inline) |
+| Ruta | Contenido |
+|------|-----------|
+| `notebooks/Challenge_RL.ipynb` | Notebook completo (Fases 1, 2 y 3) |
+| `src/q_learning_sandbox.py` | Fase 1 (Q-Learning) como script |
+| `src/train.py` | Pipeline de entrenamiento DQN/PPO/SAC |
+| `notebooks/eval.ipynb` | Evaluación autocontenida + vídeo (clases inline) |
 | `requirements.txt` | Dependencias con versiones exactas (`==`) |
-| `best_duckie_agent.zip` | Mejor agente entrenado (SAC/PPO continuo) |
-| `Report.pdf` | Esta memoria |
+| `models/best_duckie_agent.zip` | Mejor agente entrenado (SAC/PPO continuo) |
+| `docs/Report.pdf` | Esta memoria |
+| `results/q_learning_progress.png` | Curva de entrenamiento Fase 1 |
 
 ### Ejecución (Google Colab, Python 3.11)
 
 ```bash
-# 1. Configurar entorno (celda 10 del notebook o manualmente):
+# 1. Configurar entorno:
 pip install -r requirements.txt
 pip install git+https://github.com/duckietown/gym-duckietown.git@daffy
 
 # 2. Fase 1
-python q_learning_sandbox.py
+python src/q_learning_sandbox.py
 
 # 3. Fases 2 y 3
-python train.py --algo all --timesteps 200000 --curriculum
+python src/train.py --algo all --timesteps 200000 --curriculum
 
 # 4. Evaluación + vídeo
-#    abrir eval.ipynb y ejecutar todas las celdas
+#    abrir notebooks/eval.ipynb y ejecutar todas las celdas
 ```
 
 Semilla global `SEED=42` fijada en todos los componentes para reproducibilidad.
