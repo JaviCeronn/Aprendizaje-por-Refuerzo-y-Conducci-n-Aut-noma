@@ -6,7 +6,9 @@
 
 # Colab / notebook temporales
 duckie_eval_video.mp4
-q_learning_progress.png
+
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+memory/
