@@ -96,7 +96,44 @@ La celda de clases (`9b680c5f`) tenía un f-string roto partido en 3 líneas fí
 
 ---
 
-## 4. Solución FINAL: Opción A — no tocar numpy ni torch
+## 0. ⚠️ ARQUITECTURA CORRECTA (lo que de verdad funciona — leer esto primero)
+
+> Tras mucho pelear, el enfoque correcto NO es ejecutar Duckietown dentro del kernel de
+> Colab. Lo dice el notebook de referencia que SÍ funciona: **`notebooks/Challenge_RL.ipynb`**.
+
+**Causa raíz de TODOS los crashes (`restarting kernel`):** `gym-duckietown` mantiene estado
+OpenGL **global por proceso** y **segfaultea el proceso** si se renderiza dentro del kernel
+de Jupyter (y encima en Python 3.12 el stack daffy no carga sin parches). Da igual EGL, Xvfb,
+1 entorno o 5: renderizar en el kernel lo mata.
+
+**Solución (patrón del notebook de referencia, ahora aplicado a Fase2):**
+1. Instalar **Python 3.11 del sistema** vía *deadsnakes* (gym-duckietown es nativo de 3.11;
+   ahí `requirements.txt` con numpy 1.23.5 etc. encaja perfecto, sin parche zuper ni numpy 2.x).
+   **NO usar conda** (sobreescribe `libEGL` de NVIDIA y rompe el render en GPU).
+2. Instalar deps con ese 3.11: `pip install -r requirements.txt` + gym-duckietown `--no-deps`.
+3. Escribir el entrenamiento como **script** `src/train_fase2.py` (vía `%%writefile`).
+4. Ejecutarlo en un **proceso aparte** con `xvfb-run -a -s "-screen 0 1024x768x24" python3.11
+   src/train_fase2.py`. Ahí el render OpenGL es estable y **`SubprocVecEnv(spawn)` funciona**
+   (puede reimportar el módulo .py; en un notebook no podía reimportar celdas).
+5. El notebook (kernel 3.12) solo orquesta, muestra la visión sintética y **muestra las PNG**
+   que genera el script. No importa torch/duckietown en el kernel.
+
+**Estructura final del notebook Fase2 (16 celdas):** intro · setup MD · **setup py3.11** ·
+**install deps** · preprocesado MD · visión MD · visión code (autónoma, kernel) · DQN MD ·
+PPO MD · "pipeline" MD · **`%%writefile src/train_fase2.py`** · **run (`xvfb-run`)+display** ·
+¿qué vemos? DQN · ¿qué vemos? PPO · evaluación MD · conclusiones.
+
+`src/train_fase2.py` (creado): DQN+PPO sobre los 5 mapas con `SubprocVecEnv`, curvas a
+`results/Fase_2/` (`dqn_training.png`, `ppo_training.png`, `dqn_vs_ppo.png`) y `best_agent.zip`.
+Espejo del `src/train.py` de referencia (que hace DQN/PPO/SAC), pero solo baselines + curvas.
+
+> **Todo lo de §3-§4 de abajo (parche zuper, numpy 2.x, SB3 2.6.0, EGL, DummyVecEnv, env
+> secuencial) era para el enfoque ERRÓNEO de correr en el kernel 3.12. Queda como histórico
+> de por qué ese camino no servía. El enfoque vigente es el de esta §0.**
+
+---
+
+## 4. (HISTÓRICO) Opción A — no tocar numpy ni torch [enfoque kernel 3.12, DESCARTADO]
 
 | Pin | Decisión final | Motivo |
 |---|---|---|
