@@ -325,9 +325,10 @@ def train_dqn(timesteps, device="auto", results_dir=None, n_envs=None):
     print("\n=== Entrenando DQN (baseline discreto) ===", flush=True)
     env = make_vec_env(TRAIN_MAPS, discrete=True, shaping=True, n_envs=n_envs)
     model = DQN("CnnPolicy", env, policy_kwargs=policy_kwargs(),
-                learning_rate=1e-4, buffer_size=100_000, learning_starts=10_000,
-                batch_size=64, gamma=0.99, train_freq=4, target_update_interval=1_000,
-                exploration_fraction=0.4, exploration_final_eps=0.05,
+                learning_rate=1e-4, buffer_size=100_000, learning_starts=5_000,
+                batch_size=64, gamma=0.99, train_freq=4, gradient_steps=2,
+                target_update_interval=1_000,
+                exploration_fraction=0.3, exploration_final_eps=0.05,
                 verbose=1, seed=SEED, device=device)
     save_name = str(results_dir / "dqn_duckie_v2") if results_dir else "dqn_duckie_v2_agent"
     best_name = str(results_dir / "dqn_duckie_v2_best") if results_dir else "dqn_duckie_v2_best"
@@ -349,8 +350,11 @@ def train_dqn(timesteps, device="auto", results_dir=None, n_envs=None):
 def train_ppo(timesteps, device="auto", results_dir=None, n_envs=None):
     print("\n=== Entrenando PPO (baseline continuo) ===", flush=True)
     env = make_vec_env(TRAIN_MAPS, discrete=False, shaping=True, n_envs=n_envs)
+    # learning_rate con decaimiento lineal: pasos grandes al principio, finos al
+    # final (en el run anterior PPO seguia mejorando al agotar el presupuesto).
     model = PPO("CnnPolicy", env, policy_kwargs=policy_kwargs(),
-                learning_rate=3e-4, n_steps=512, batch_size=128, n_epochs=10,
+                learning_rate=lambda p: 3e-4 * p,
+                n_steps=512, batch_size=128, n_epochs=10,
                 gamma=0.99, gae_lambda=0.95, clip_range=0.2, ent_coef=0.01,
                 verbose=1, seed=SEED, device=device)
     save_name = str(results_dir / "ppo_duckie_v2") if results_dir else "ppo_duckie_v2_agent"
@@ -482,7 +486,9 @@ def _save_permap(per_map, label, results_dir, algo):
 
 def main():
     parser = argparse.ArgumentParser(description="Entrenamiento RL Duckietown.")
-    parser.add_argument("--algo", choices=["dqn", "ppo", "sac", "all"], default="all")
+    parser.add_argument("--algo", choices=["dqn", "ppo", "sac", "baselines", "all"],
+                        default="all",
+                        help="'baselines' = DQN + PPO (Fase 2); 'all' incluye tambien SAC.")
     parser.add_argument("--timesteps", type=int, default=200_000)
     parser.add_argument("--curriculum", action="store_true")
     parser.add_argument("--eval-episodes", type=int, default=5)
@@ -509,12 +515,12 @@ def main():
     trained = {}
     hist_map = {}
 
-    if args.algo in ("dqn", "all"):
+    if args.algo in ("dqn", "baselines", "all"):
         model, hist = train_dqn(args.timesteps, device, results_dir, n_envs=args.n_envs)
         trained["DQN"] = (model, True)
         hist_map["dqn"] = hist
 
-    if args.algo in ("ppo", "all"):
+    if args.algo in ("ppo", "baselines", "all"):
         model, hist = train_ppo(args.timesteps, device, results_dir, n_envs=args.n_envs)
         trained["PPO"] = (model, False)
         hist_map["ppo"] = hist
@@ -542,8 +548,16 @@ def main():
     best = max(continuous, key=lambda n: continuous[n]["mean_reward"]) if continuous \
         else max(eval_results, key=lambda n: eval_results[n]["mean_reward"])
     best_path = str(results_dir / "best_agent_v2") if results_dir else "best_duckie_agent_v2"
-    trained[best][0].save(best_path)
-    print(f"\n>>> Mejor agente: {best} -> {best_path}.zip")
+    best_ckpt = {"DQN": "dqn_duckie_v2_best", "PPO": "ppo_duckie_v2_best"}.get(best)
+    src_zip = (results_dir / (best_ckpt + ".zip")) if (results_dir and best_ckpt) else None
+    if src_zip is not None and src_zip.exists():
+        # El checkpoint _best (mayor ep_rew_mean visto) suele superar al modelo final.
+        import shutil
+        shutil.copyfile(src_zip, best_path + ".zip")
+        print(f"\n>>> Mejor agente: {best} (checkpoint _best) -> {best_path}.zip")
+    else:
+        trained[best][0].save(best_path)
+        print(f"\n>>> Mejor agente: {best} -> {best_path}.zip")
 
 
 if __name__ == "__main__":
