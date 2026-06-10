@@ -7,8 +7,16 @@
 # Colab / notebook temporales
 duckie_eval_video.mp4
 
+# Anti-idle local (no subir al repo)
+keep_colab_alive.py
+
+# Ficheros de bloqueo de Word
+~$*.docx
+~$*.pptx
+
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
 
 memory/
+entregable/
